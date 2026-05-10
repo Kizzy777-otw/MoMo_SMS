@@ -28,3 +28,5 @@ Process MoMo SMS XML data, clean and categorize transactions, store results in S
 ├── scripts/
 └── tests/
 ```
+## Architecture Diagram
+https://miro.com/app/board/uXjVHV3F_yA=/
