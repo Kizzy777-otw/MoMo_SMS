@@ -30,3 +30,6 @@ Process MoMo SMS XML data, clean and categorize transactions, store results in S
 ```
 ## Architecture Diagram
 https://miro.com/app/board/uXjVHV3F_yA=/
+
+## SCRUM BOARD
+https://trello.com/invite/b/6a00e7a0f22a5baed5d9b258/ATTIe3878dc96b53f39d86fe36d1dd6945e1548919D2/momo-sms
