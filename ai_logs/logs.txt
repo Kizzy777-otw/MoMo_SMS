@@ -1,0 +1,48 @@
+AI ETHICAL USAGE LOG - MoMo SMS Data Analyzer
+Date: 2026-05-18
+Team: G4 Team
+
+Purpose:
+This file records where AI tools were used in the project and how usage stayed ethical, transparent, and accountable.
+
+1) README and Documentation Support
+- AI was used to help draft clear technical explanations in README sections (project structure, SQL implementation, CRUD write-up format).
+- Human verification done:
+  - Confirmed table names and schema details against `database/db.sql`.
+  - Confirmed CRUD examples aligned with actual project queries and sample seed data.
+- Ethical guardrail:
+  - AI-generated text was reviewed, edited, and validated before submission.
+  - No fabricated architecture claims were kept without checking project files.
+
+2) SQL/Database Guidance
+- AI was used to explain SQL concepts (example: where to place CHECK constraints and what they enforce).
+- Human verification done:
+  - Placement and syntax reviewed against the active schema.
+  - Constraint ideas matched business logic before being accepted.
+- Ethical guardrail:
+  - AI suggestions were treated as guidance, not automatically trusted.
+
+3) Python Debugging and Type-Checking Help
+- AI was used to diagnose a Pylance error in `api/services/transactions.py` related to dictionary indexing types.
+- Human verification done:
+  - Reviewed final code changes directly in file.
+  - Ensured runtime behavior still matched `cursor(dictionary=True)` usage.
+- Ethical guardrail:
+  - Changes were minimal and traceable; no hidden refactors.
+
+4) Dependency Identification
+- AI was used to identify the correct MySQL Python package for this codebase.
+- Human verification done:
+  - Confirmed import in `api/db.py` (`import mysql.connector`) matches package `mysql-connector-python`.
+- Ethical guardrail:
+  - Dependency decision based on existing code, not guesswork.
+
+5) What AI Was NOT Used For
+- AI was not used to impersonate teammates or falsify contribution history.
+- AI was not used to generate fake test outputs, fake logs, or fake database execution evidence.
+- AI was not given private credentials, tokens, or sensitive personal data.
+
+6) Accountability Statement
+- AI assistance was used as a productivity and explanation tool.
+- Final responsibility for correctness, integration, and submission quality remained with the team.
+- All AI-assisted outputs were reviewed by humans before acceptance.
