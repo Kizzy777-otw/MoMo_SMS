@@ -39,6 +39,68 @@ https://trello.com/invite/b/6a00e7a0f22a5baed5d9b258/ATTIe3878dc96b53f39d86fe36d
 
 ## ERD Diagram
 
+The ERD models how users send/receive transactions, how transactions are categorized, and how audit logs are attached.
+
+### Entities
+
+1. `Users`
+- Stores account identity used in transactions.
+- Primary key: `user_id`
+- Important fields: `username` (unique), `phone_number` (unique)
+
+2. `Transactions`
+- Stores each money movement record.
+- Primary key: `transaction_id`
+- Important fields: `amount`, `fee`, `balance`, `status`, `date`
+- Foreign keys:
+  - `sender_id` -> `Users.user_id`
+  - `receiver_id` -> `Users.user_id`
+  - `category_id` -> `Transaction_Categories.category_id`
+- Constraint:
+  - `CHECK (sender_id IS NULL OR receiver_id IS NULL OR sender_id <> receiver_id)` prevents same-user sender/receiver pairs when both are present.
+
+3. `Transaction_Categories`
+- Stores available transaction grouping labels.
+- Primary key: `category_id`
+- Important fields: `category_name`, `description`
+
+4. `User_Categories`
+- Junction table showing category usage per user.
+- Composite primary key: (`user_id`, `category_id`)
+- Foreign keys:
+  - `user_id` -> `Users.user_id`
+  - `category_id` -> `Transaction_Categories.category_id`
+- Important field: `usage_count`
+
+5. `System_Logs`
+- Stores system or audit messages related to transactions.
+- Primary key: `log_id`
+- Foreign key:
+  - `transaction_id` -> `Transactions.transaction_id`
+- Important fields: `message`, `timestamp`
+
+### Relationships (Cardinality)
+
+1. `Users` (1) -> (M) `Transactions` as sender
+- One user can send many transactions.
+
+2. `Users` (1) -> (M) `Transactions` as receiver
+- One user can receive many transactions.
+
+3. `Transaction_Categories` (1) -> (M) `Transactions`
+- One category can classify many transactions.
+
+4. `Users` (M) <-> (M) `Transaction_Categories` via `User_Categories`
+- A user can be associated with many categories, and a category can be associated with many users.
+
+5. `Transactions` (1) -> (M) `System_Logs`
+- One transaction can have multiple log entries.
+
+### Referential Integrity
+
+- `ON DELETE CASCADE` is applied on foreign keys so related child rows are removed automatically when a parent row is deleted.
+- This keeps the database consistent and avoids orphan records.
+
 ## SQL Database Implementation
 
 - Database Name: momo_sms
