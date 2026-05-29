@@ -14,10 +14,19 @@ import json
 from urllib.parse import urlparse
 import base64
 import time
+import os
+import logging
+from dotenv import load_dotenv
 
 from api.xml_parser import transactions_list, transactions_dict, get_next_id
 
-
+load_dotenv()  # Load environment variables from .env file
+logging.basicConfig(
+    filename="auth_failures.log",
+    level=logging.WARNING,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+auth_logger = logging.getLogger("auth")
 class TransactionHandler(BaseHTTPRequestHandler):
     """HTTP handler providing CRUD operations for transactions.
 
@@ -25,9 +34,11 @@ class TransactionHandler(BaseHTTPRequestHandler):
     uses the in-memory `transactions_list` and `transactions_dict` from
     `api.parser`.
     """
-
-    VALID_USER = "admin"
-    VALID_PASS = "password123"
+    
+    ADMIN_USER = os.getenv("API_USERNAME", "admin")
+    ADMIN_PASS = os.getenv("API_PASSWORD", "password123")
+    VIEWER_USER = os.getenv("VIEWER_USERNAME", "viewer")
+    VIEWER_PASS = os.getenv("VIEWER_PASSWORD", "viewerpass")
 
     def _send_json(self, status: int, obj):
         """Send a JSON response with given status and Python object."""
@@ -40,15 +51,35 @@ class TransactionHandler(BaseHTTPRequestHandler):
 
     def _unauthorized(self):
         """Send a 401 Unauthorized JSON response."""
-        self._send_json(401, {"error": "Unauthorized"})
+        data = json.dumps({"error": "Unauthorized"}, ensure_ascii=False).encode("utf-8")
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="API"')
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _forbidden(self):
+        """Send a 403 forbidden JSON response"""
+        data = json.dumps({"error": "Forbidden"}, ensure_ascii=False).encode("utf-8")
+        self.send_response(403)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
 
     def _check_auth(self) -> bool:
         """Validate HTTP Basic Auth credentials from the Authorization header.
 
         Returns True if valid, otherwise sends a 401 response and returns False.
         """
+        client_ip = self.client_address[0]
         auth = self.headers.get("Authorization")
         if not auth or not auth.startswith("Basic "):
+            auth_logger.warning(
+                f"Missing or invalid Authorization header from  {client_ip} "
+                f"on {self.command} {self.path}")
             self._unauthorized()
             return False
 
@@ -57,14 +88,20 @@ class TransactionHandler(BaseHTTPRequestHandler):
             decoded = base64.b64decode(token).decode("utf-8")
             user, passwd = decoded.split(":", 1)
         except Exception:
+            auth_logger.warning(
+                f"Malformed credentials from {client_ip} on {self.command} {self.path}")
             self._unauthorized()
             return False
 
-        if user != self.VALID_USER or passwd != self.VALID_PASS:
-            self._unauthorized()
-            return False
-
-        return True
+        if user == self.ADMIN_USER and passwd == self.ADMIN_PASS:
+            return "admin"
+        if user == self.VIEWER_USER and passwd == self.VIEWER_PASS:
+            return "viewer"
+        auth_logger.warning(
+            f"Failed login attempt for user '{user}' from {client_ip} "
+            f"on {self.command} {self.path}")
+        self._unauthorized()
+        return False
 
     def _parse_path(self):
         """Return (resource, id) where id is int or None.
@@ -87,7 +124,8 @@ class TransactionHandler(BaseHTTPRequestHandler):
 
         Requires Basic Auth.
         """
-        if not self._check_auth():
+        role = self._check_auth()
+        if role is False:
             return
         resource, _id = self._parse_path()
         if resource != "transactions":
@@ -110,9 +148,13 @@ class TransactionHandler(BaseHTTPRequestHandler):
 
         Requires Basic Auth.
         """
-        if not self._check_auth():
+        role = self._check_auth()
+        if role is False:
             return
-
+        if role != "admin":
+            self._forbidden()
+            return
+        
         resource, _id = self._parse_path()
         if resource != "transactions" or _id is not None:
             self._send_json(404, {"error": "Not Found"})
@@ -141,7 +183,11 @@ class TransactionHandler(BaseHTTPRequestHandler):
 
         Requires Basic Auth.
         """
-        if not self._check_auth():
+        role = self._check_auth()
+        if role is False:
+            return
+        if role != "admin":
+            self._forbidden()
             return
 
         resource, _id = self._parse_path()
@@ -180,7 +226,11 @@ class TransactionHandler(BaseHTTPRequestHandler):
 
         Requires Basic Auth.
         """
-        if not self._check_auth():
+        role = self._check_auth()
+        if role is False:
+            return
+        if role != "admin": 
+            self._forbidden()
             return
 
         resource, _id = self._parse_path()
