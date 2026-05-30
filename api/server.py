@@ -18,7 +18,7 @@ import os
 import logging
 from dotenv import load_dotenv
 
-from api.xml_parser import transactions_list, transactions_dict, get_next_id
+from dsa.xml_parser import transactions_list, transactions_dict, get_next_id
 
 load_dotenv()  # Load environment variables from .env file
 logging.basicConfig(
@@ -69,7 +69,7 @@ class TransactionHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-    def _check_auth(self) -> bool:
+    def _check_auth(self) -> str | bool:
         """Validate HTTP Basic Auth credentials from the Authorization header.
 
         Returns True if valid, otherwise sends a 401 response and returns False.
